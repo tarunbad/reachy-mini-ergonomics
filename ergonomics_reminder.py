@@ -22,6 +22,8 @@ so you can verify the robot connection without waiting for a real slouch.
 """
 
 import os
+import random
+import subprocess
 import sys
 import time
 import urllib.request
@@ -67,6 +69,48 @@ MODEL_URL = (
     "https://storage.googleapis.com/mediapipe-models/pose_landmarker/"
     "pose_landmarker_lite/float16/latest/pose_landmarker_lite.task"
 )
+
+
+# ---- Voice (macOS built-in text-to-speech) ----
+SLOUCH_LINES = [
+    "Sit up straight, Tarun.",
+    "Posture check. You're failing it.",
+    "Your spine called. It wants backup.",
+    "Tech neck detected. Straighten up.",
+]
+TILT_LINES = [
+    "Your head is tilting. Level it out.",
+    "You're leaning like a question mark. Sit up.",
+]
+TOO_CLOSE_LINES = [
+    "You're too close to the screen. Back up.",
+    "The screen does not need a hug. Move back.",
+]
+BREAK_LINES = [
+    "You've been sitting for {mins} minutes. Go take a walk.",
+    "Break time. Stand up, stretch, drink some water.",
+    "{mins} minutes in that chair. Your legs miss you.",
+]
+
+
+def speak(text):
+    """Say a line out loud via macOS's built-in `say` (non-blocking, so the
+    voice overlaps with the robot gesture). Silently does nothing off-macOS."""
+    try:
+        subprocess.Popen(["say", text],
+                         stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except FileNotFoundError:
+        pass
+
+
+def pick_line(issues):
+    """Choose a spoken line matching what was actually detected."""
+    issues = issues or []
+    if "too close to screen" in issues:
+        return random.choice(TOO_CLOSE_LINES)
+    if "head tilted sideways" in issues or "leaning to one side" in issues:
+        return random.choice(TILT_LINES)
+    return random.choice(SLOUCH_LINES)
 
 
 def ensure_model():
@@ -149,13 +193,14 @@ def check_posture(lm, w, h, baseline_shoulder_w=None):
     return issues, metrics
 
 
-def reachy_nudge(mini):
+def reachy_nudge(mini, issues=None):
     """Obvious 'hey, sit up' reaction: big droop, a little shake, then perk back up.
 
     goto_target already blocks until the move finishes, so sleeps below are
     only for holding a pose long enough to actually see it.
     """
     print("Posture nudge — look at the MuJoCo window!")
+    speak(pick_line(issues))
     # Droop + antennas down (concerned)
     mini.goto_target(
         head=create_head_pose(pitch=-35, degrees=True, mm=True),
@@ -191,6 +236,8 @@ def reachy_break_reminder(mini):
     """Cheerful 'get up and move!' gesture: perks up and looks around the room,
     like it's suggesting you go take a walk. Distinct from the concerned nudge."""
     print("Break time — you've been sitting a while. Stand up and stretch!")
+    mins = SIT_TIME_LIMIT // 60
+    speak(random.choice(BREAK_LINES).format(mins=mins))
     mini.goto_target(
         head=create_head_pose(pitch=20, degrees=True, mm=True),
         antennas=[-0.6, 0.6],
@@ -257,8 +304,9 @@ def main():
         if "--test" in sys.argv:
             print("Startup test nudge in 1s — watch the MuJoCo window, not the webcam.")
             time.sleep(1)
+            speak("Systems check. I can move, and I can talk.")
             reachy_nudge(mini)
-            print("If Reachy just moved, the robot connection is good.")
+            print("If Reachy just moved and spoke, everything is working.")
 
         slouch_start = None
         good_posture_ticks = 0
@@ -329,7 +377,7 @@ def main():
                             cooldown_left = NUDGE_COOLDOWN - (time.time() - last_nudge_time)
                             if cooldown_left <= 0:
                                 print(f"Nudging for: {', '.join(issues)}")
-                                reachy_nudge(mini)
+                                reachy_nudge(mini, issues)
                                 last_nudge_time = time.time()
                             else:
                                 print(f"Posture still bad, but nudge on cooldown "
