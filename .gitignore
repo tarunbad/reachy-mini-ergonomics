@@ -1,0 +1,9 @@
+# Python virtual environment — recreate with: python3.11 -m venv reachy_mini_env
+reachy_mini_env/
+
+# Downloaded MediaPipe model — the script re-downloads it automatically
+pose_landmarker_lite.task
+
+# Python cache
+__pycache__/
+*.pyc
