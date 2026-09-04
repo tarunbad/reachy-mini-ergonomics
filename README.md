@@ -2,6 +2,13 @@
 
 A desk robot that physically nags you into better posture.
 
+<p align="center">
+  <img src="docs/nudge.gif" width="360" alt="Reachy Mini drooping its head in concern, shaking it, then perking back up — the posture nudge">
+</p>
+
+*The nudge you get after 60 seconds of slouching. Rendered straight from the
+MuJoCo model with `make_demo_gif.py` — no screen recording needed.*
+
 Your webcam watches how you sit. When you slouch, tilt, lean, or creep toward
 the screen for too long, [Reachy Mini](https://huggingface.co/docs/reachy-mini/index)
 reacts — drooping its head in concern, shaking a disappointed "hey!", and
