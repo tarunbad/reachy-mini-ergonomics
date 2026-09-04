@@ -15,7 +15,14 @@ reacts — drooping its head in concern, shaking a disappointed "hey!", and
 perking back up. Sit badly for 45 minutes straight and it cheerfully looks
 around the room, suggesting you go take a walk.
 
-No notification popup you can ignore. A robot judging you is much harder to tune out.
+**And it talks.** On macOS, nudges come with spoken commentary matched to the
+offense (via the built-in `say` TTS): slouch and you'll hear *"Your spine
+called. It wants backup."* — lean into the monitor and it's *"The screen does
+not need a hug. Move back."* Lines are picked randomly per category so the
+nagging stays fresh.
+
+No notification popup you can ignore. A robot judging you out loud is much
+harder to tune out.
 
 ## What it detects
 
@@ -54,6 +61,7 @@ webcam ──> MediaPipe Pose (BlazePose 33 landmarks)
 
 - **Pose tracking:** MediaPipe `PoseLandmarker` (lite model, auto-downloaded on first run)
 - **Robot:** Reachy Mini SDK — runs identically against the MuJoCo simulator or real hardware
+- **Voice:** macOS built-in `say` TTS, spoken in parallel with the gesture (no extra deps; silently skipped on other platforms)
 - **Live overlay:** the webcam window shows all metrics, the current verdict, a countdown to the next nudge, and your sitting timer
 
 ## Setup
